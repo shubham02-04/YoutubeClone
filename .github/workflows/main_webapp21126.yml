@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - webapp21126
+name: Build and deploy React app to Azure Web App - webapp21126
 
 on:
   push:
@@ -10,10 +10,10 @@ on:
   workflow_dispatch:
 
 jobs:
-    build:
+  build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read # Required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -22,33 +22,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+          cache: 'npm'
 
       - name: npm install and build
         run: |
           npm install
           npm run build
         env:
-          CI: false
+          CI: false # Don't treat the autoprefixer warning as an error
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: build
+          path: build # Only the production build output
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write # Required for requesting the JWT
+      contents: read  # Required for actions/checkout
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -56,11 +57,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_6E8765009CB642EAA7562E0440ACFEF4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7B65FC3AE561416188E8C56ECFB80C02 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'webapp21126'
           slot-name: 'Production'
           package: .
-          
